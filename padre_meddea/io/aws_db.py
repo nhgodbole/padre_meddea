@@ -7,6 +7,7 @@ from swxsoc.util.util import record_timeseries, create_annotation
 
 from padre_meddea import log
 import padre_meddea.util.util as util
+from padre_meddea.housekeeping.calibration import get_calibration_func
 
 
 def record_spectra(pkt_ts, spectra, ids):
@@ -17,7 +18,11 @@ def record_spectra(pkt_ts, spectra, ids):
     NUM_LC_PER_SPEC = 4
     ADC_RANGES = np.linspace(0, 512, NUM_LC_PER_SPEC + 1, dtype=np.uint16)
     ts = TimeSeries(time=pkt_ts.time)
-    for i, (this_asic, this_chan) in enumerate(zip(asic_nums[0], channel_nums[0])):
+    median_asic_nums = np.median(asic_nums, axis=0)
+    median_channel_nums = np.median(channel_nums, axis=0)
+    for i, (this_asic, this_chan) in enumerate(
+        zip(median_asic_nums, median_channel_nums)
+    ):
         this_col = f"Det{this_asic}{util.pixel_to_str(util.channel_to_pixel(this_chan))[:-1]}"  # remove L or S
         for j in range(NUM_LC_PER_SPEC):
             this_lc = np.sum(
@@ -35,10 +40,32 @@ def record_photons(pkt_list, event_list):
     create_annotation(pkt_list.time[0], f"{pkt_list.meta['ORIGFILE']}", ["meta"])
 
 
-def record_housekeeping(hk_ts):
+def record_housekeeping(hk_ts: TimeSeries):
     """Send the housekeeping time series to AWS."""
-    record_timeseries(hk_ts, "housekeeping", "meddea")
-    create_annotation(hk_ts.time[0], f"{hk_ts.meta['ORIGFILE']}", ["meta"])
+    my_hk_ts = hk_ts.copy()
+    colnames_to_remove = [
+        "CCSDS_APID",
+        "CCSDS_VERSION_NUMBER",
+        "CCSDS_PACKET_TYPE",
+        "CCSDS_SECONDARY_FLAG",
+        "CCSDS_SEQUENCE_FLAG",
+        "CCSDS_SEQUENCE_COUNT",
+        "CCSDS_PACKET_LENGTH",
+        "timestamp",
+        "CHECKSUM",
+    ]
+    for this_col in colnames_to_remove:
+        if this_col in hk_ts.colnames:
+            my_hk_ts.remove_column(this_col)
+    # calibrate hard to calibrate columns before sending
+    colnames_to_calibrate = ["fp_temp", "hvps_temp", "dib_temp"]
+    for this_col in colnames_to_calibrate:
+        if this_col in hk_ts.colnames:
+            f = get_calibration_func(this_col)
+            my_hk_ts[f"cal_{this_col}"] = f(hk_ts[this_col])
+
+    record_timeseries(my_hk_ts, "housekeeping", "meddea")
+    create_annotation(my_hk_ts.time[0], f"{hk_ts.meta['ORIGFILE']}", ["meta"])
 
 
 def record_cmd(cmd_ts):
