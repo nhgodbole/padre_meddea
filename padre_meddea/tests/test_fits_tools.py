@@ -1,20 +1,16 @@
-import json
 import os
 import platform
 import pytest
 from pathlib import Path
 import tempfile
-import time
 import numpy as np
 
 from astropy.table import Table
 import astropy.io.fits as fits
-import pytest
 
 from padre_meddea.io.fits_tools import (
     concatenate_files,
     _init_hdul_structure,
-    hdu_to_dict,
     get_hdu_data_times,
 )
 
@@ -173,45 +169,45 @@ def temp_dir():
         (
             [
                 data_dir
+                / "spec/padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
+                data_dir
+                / "spec/padre_meddea_l0test_spectrum_20250504T081521_v0.1.0.fits",
+                data_dir
                 / "spec/padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits",
-                data_dir
-                / "spec/padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits",
-                data_dir
-                / "spec/padre_meddea_l0test_spectrum_20250504T141211_v0.1.0.fits",
             ],
             [
                 "padre_meddea_l1_spectrum_20250504T000000_v0.1.0.fits",
             ],
-            "padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T141211_v0.1.0.fits",
+            "padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T081521_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits",
             [
                 data_dir
-                / "spec/padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
+                / "spec/padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits",
             ],
             [
                 "padre_meddea_l1_spectrum_20250504T000000_v0.1.0.fits",
                 "padre_meddea_l1_spectrum_20250505T000000_v0.1.0.fits",
             ],
-            "padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T141211_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
+            "padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T081521_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits, padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits",
             [
                 {
-                    "date-beg": "2025-05-04T00:00:00.000",  # 2025-05-04 10:38:21.392
+                    "date-beg": "2025-05-04T07:04:11.349",
+                    "date-end": "2025-05-04T07:05:41.349",
+                    "filename": "padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
+                },
+                {
+                    "date-beg": "2025-05-04T08:15:21.363",
+                    "date-end": "2025-05-04T08:16:51.364",
+                    "filename": "padre_meddea_l0test_spectrum_20250504T081521_v0.1.0.fits",
+                },
+                {
+                    "date-beg": "2025-05-04T10:38:11.392",
                     "date-end": "2025-05-04T10:39:51.392",
                     "filename": "padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits",
                 },
                 {
-                    "date-beg": "2025-05-04T00:00:00.000",  # 2025-05-04 11:49:31.406
-                    "date-end": "2025-05-04T11:50:51.406",
+                    "date-beg": "2025-05-04T11:49:21.406",
+                    "date-end": "2025-05-04T23:59:59.999",
                     "filename": "padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits",
-                },
-                {
-                    "date-beg": "2025-05-04T00:00:00.000",  # 2025-05-04 14:12:21.433
-                    "date-end": "2025-05-04T14:13:41.434",
-                    "filename": "padre_meddea_l0test_spectrum_20250504T141211_v0.1.0.fits",
-                },
-                {
-                    "date-beg": "2025-05-04T00:00:00.000",  # 2025-05-04 07:04:21.349
-                    "date-end": "2025-05-04T23:59:59.999",  # 2025-05-04T07:04:51.349
-                    "filename": "padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
                 },
             ],
         ),
@@ -301,9 +297,9 @@ def test_concatenate_fits_cases(
 
             expected_rows.append(expected_row)
 
-        assert (
-            expected_rows == expected_provenance_rows
-        ), "Expected rows do not match actual rows in provenance table"
+        assert expected_rows == expected_provenance_rows, (
+            "Expected rows do not match actual rows in provenance table"
+        )
 
     if len(output_files) > 1:
         secondary_output_file = output_files[1]
@@ -354,8 +350,8 @@ def test_concatenate_fits_cases(
             / "hk/padre_meddea_l0test_housekeeping_20250504T055308_v0.1.0.fits",
         ],
         [
-            data_dir / "spec/padre_meddea_l0test_spectrum_20250504T103811_v0.1.0.fits",
-            data_dir / "spec/padre_meddea_l0test_spectrum_20250504T114921_v0.1.0.fits",
+            data_dir / "spec/padre_meddea_l0test_spectrum_20250504T070411_v0.1.0.fits",
+            data_dir / "spec/padre_meddea_l0test_spectrum_20250504T081521_v0.1.0.fits",
         ],
     ],
 )

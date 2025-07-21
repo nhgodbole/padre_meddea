@@ -3,16 +3,14 @@ This module provides a utilities to manage fits files reading and writing.
 """
 
 import gc
-import json
 import os
 import re
 import tempfile
-import time
 import warnings
 from collections import OrderedDict, defaultdict
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 import astropy.io.fits as fits
 import ccsdspy
@@ -726,9 +724,12 @@ def get_hdu_data_times(hdul_dict: dict[int, dict], hdu_name: str) -> Time:
 
     # Housekeeping HDUs
     elif data_type == "housekeeping" and hdu_name == "HK":
-        return calc_time(data["timestamp"])
+        if "pkttimes" in data.keys():
+            return calc_time(data["pkttimes"])
+        else:
+            return calc_time(data["timestamp"])
     elif data_type == "housekeeping" and hdu_name == "READ":
-        return calc_time(data["time_s"], data["time_clock"])
+        return calc_time(data["pkttimes"], data["pktclock"])
 
     # Spectrum HDUs
     elif data_type == "spectrum" and hdu_name == "PKT":

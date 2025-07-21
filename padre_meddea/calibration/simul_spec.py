@@ -4,11 +4,9 @@ import numpy as np
 from scipy import interpolate
 
 import astropy.units as u
-from astropy.table import QTable, Table
-from astropy.time import Time
+from astropy.table import QTable
 from astropy.io import ascii
 from astropy.modeling.models import Gaussian1D, custom_model
-from astropy.constants.codata2018 import h, c, e, k_B
 
 from scipy.stats.sampling import NumericalInversePolynomial
 
@@ -399,9 +397,9 @@ def generate_photon_list_file(output_file=True):
             flare_ph_num = index.sum()
             print(f"Got {flare_ph_num} flare photons.")
 
-            fl_ph_wait_times[
-                ph_counter : ph_counter + flare_ph_num
-            ] = this_fl_ph_wait_times[index]
+            fl_ph_wait_times[ph_counter : ph_counter + flare_ph_num] = (
+                this_fl_ph_wait_times[index]
+            )
             fl_ph_arrival_times[ph_counter : ph_counter + flare_ph_num] = (
                 this_fl_ph_arrival_times[index] + this_time * u.s
             )
