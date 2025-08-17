@@ -1,18 +1,17 @@
 """
-This module provides general utility functions.
+Provides general utility functions.
 """
 
 from pathlib import Path
-import numpy as np
 
+import astropy.units as u
+import numpy as np
 from astropy.time import Time, TimeDelta
 from astropy.timeseries import TimeSeries
-import astropy.units as u
-from ccsdspy.utils import split_packet_bytes, split_by_apid
+from ccsdspy.utils import split_by_apid, split_packet_bytes
+from swxsoc.util import create_science_filename, parse_science_filename
 
-from swxsoc.util import parse_science_filename, create_science_filename
-
-from padre_meddea import EPOCH, APID, log
+from padre_meddea import APID, EPOCH, log
 
 # used to identify bad times
 MIN_TIME_BAD = Time("2024-02-01T00:00")
@@ -169,3 +168,8 @@ def threshold_to_energy(threshold_value: int) -> u.Quantity:
     msb_array[-8:] = np.arange(0, 8)
     threshold_energy = msb_array * msb + lsb_array * lsb
     return threshold_energy[threshold_value]
+
+
+def get_file_time(filename) -> Time:
+    """Given filename return the time stamp."""
+    return Time(f"{filename[0:4]}-{filename[4:6]}-{filename[6:8]}T00:00")
