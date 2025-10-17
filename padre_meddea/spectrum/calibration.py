@@ -21,7 +21,6 @@ specutils.conf.do_continuum_function_check = False
 
 BA_LINE_ENERGIES = [7.8, 11.8, 30.85, 35, 53.5, 57.8, 81] * u.keV
 
-
 def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
     """
     Given a full range Ba-133 spectrum, return a rough linear calibration function
@@ -257,6 +256,8 @@ def calibrate_linear_phlist(
     calibrated PhotonList
     """
     ph_list.event_list["energy"] = np.zeros(len(ph_list.event_list["atod"]))
+    # subtract the baseline
+    ph_list.event_list["atod"] = (np.array(ph_list.event_list["atod"], dtype="float64") - np.array(ph_list.event_list["baseline"], dtype="float64")) + np.mean(np.array(ph_list.event_list["baseline"], dtype="float64"))
     for this_asic in range(4):
         for this_pixel in range(12):
             ind = (ph_list.event_list["asic"] == this_asic) * (
