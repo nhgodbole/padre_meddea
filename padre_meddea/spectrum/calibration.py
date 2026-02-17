@@ -20,7 +20,17 @@ from padre_meddea.spectrum.spectrum import PhotonList, SpectrumList
 specutils.conf.do_continuum_function_check = False
 
 BA_LINE_ENERGIES = [7.8, 11.8, 30.85, 35, 53.5, 57.8, 81] * u.keV
-
+'''
+BA_LINE_ENERGIES = [
+    7.68,    # 
+    11.8,    # 
+    (30.6252*0.334+30.9727*0.624)/(0.334 + 0.624),
+    (34.9870*0.117+35.8230*0.046)/(0.117+0.046),  # 
+    53.1622, # 
+    57.8,    # 
+    80.9979  # 
+    ] * u.keV
+'''
 
 def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
     """
@@ -65,6 +75,7 @@ def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
     return f
 
 
+'''
 def fit_peak_parabola(spec: Spectrum1D) -> float:
     """Given a spectral region with a single line, fit a parabola
     to the peak and return the position of the maximum
@@ -86,7 +97,46 @@ def fit_peak_parabola(spec: Spectrum1D) -> float:
     p = np.polyfit(fit_x, fit_y, 2)
     fit_peak = -p[1] / (2.0 * p[0])
     return fit_peak
+'''
 
+#'''
+# Version that handles edge cases.
+def fit_peak_parabola(spec: Spectrum1D) -> float:
+    """Safe version of fit_peak_parabola that handles edge cases"""
+    x = spec.spectral_axis.value
+    y = spec.flux.value
+    max_ind = np.argmax(y)
+    
+    # Handle edge cases
+    if len(x) < 3:
+        return x[max_ind]  # Not enough points for parabolic fit
+    elif max_ind == 0:
+        # Peak at start - use first three points
+        fit_indices = [0, 1, 2]
+    elif max_ind == len(x) - 1:
+        # Peak at end - use last three points  
+        fit_indices = [len(x)-3, len(x)-2, len(x)-1]
+    else:
+        # Normal case - use three points around maximum
+        fit_indices = [max_ind - 1, max_ind, max_ind + 1]
+    
+    fit_x = [x[i] for i in fit_indices]
+    fit_y = [y[i] for i in fit_indices]
+    
+    try:
+        p = np.polyfit(fit_x, fit_y, 2)
+        # Check if parabola opens downward (p[0] < 0)
+        if p[0] < 0:
+            fit_peak = -p[1] / (2.0 * p[0])
+            # Make sure fit result is within reasonable bounds
+            if fit_x[0] <= fit_peak <= fit_x[-1]:
+                return fit_peak
+        # If parabola fit fails or gives unreasonable result, return max position
+        return x[max_ind]
+    except:
+        # If polyfit fails, just return the max position
+        return x[max_ind]
+#'''
 
 def fit_peaks(
     spec: Spectrum1D,
@@ -257,6 +307,10 @@ def calibrate_linear_phlist(
     calibrated PhotonList
     """
     ph_list.event_list["energy"] = np.zeros(len(ph_list.event_list["atod"]))
+
+    # Subtract the baseline from 'atod' column before applying the energy calibration. 
+    #ph_list.event_list['atod'] = (np.array(ph_list.event_list['atod'], dtype='float64') - np.array(ph_list.event_list['baseline'], dtype='float64')) + np.mean(np.array(ph_list.event_list['baseline'], dtype='float64'))
+    
     for this_asic in range(4):
         for this_pixel in range(12):
             ind = (ph_list.event_list["asic"] == this_asic) * (

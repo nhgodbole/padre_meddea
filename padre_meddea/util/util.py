@@ -15,7 +15,7 @@ from astropy.timeseries import TimeSeries
 from ccsdspy.utils import split_by_apid, split_packet_bytes
 from sunpy.net.attr import AttrAnd
 from swxsoc.util import (
-    Descriptor,
+    #Descriptor,
     DevelopmentBucket,
     Instrument,
     Level,
