@@ -19,10 +19,18 @@ from padre_meddea.spectrum.spectrum import PhotonList, SpectrumList
 
 specutils.conf.do_continuum_function_check = False
 
-BA_LINE_ENERGIES = [7.8, 11.8, 30.85, 35, 53.5, 57.8, 81] * u.keV
+BA_LINE_ENERGIES = [
+    7.5806,     
+    11.85,
+    30.9731,
+    35.053,
+    53.1622,    
+    57.9847,    
+    80.9979     
+] * u.keV
 
 
-def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
+def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False, mode: str = "default"):
     """
     Given a full range Ba-133 spectrum, return a rough linear calibration function
     by finding and fitting only the two strongest lines (30.85 keV, 81 keV).
@@ -35,14 +43,19 @@ def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
         The Ba-133 spectrum
     plot : bool
         If True, then display a plot of the spectrum with the line peaks found.
+    mode : str
+        "default" - uses only strong lines >15 keV
+        "highsens" - uses all 7 lines including weak low-energy lines
+        
     Returns
     -------
     np.poly1d linear fit
     """
-    # the two strongest lines in the spectrum 30.85, 81
+    # Always use the two strongest lines in the spectrum: 30.85 keV and 81 keV.
     line_energies = u.Quantity([BA_LINE_ENERGIES[2], BA_LINE_ENERGIES[-1]])
     line_centers = np.zeros(len(line_energies))
-    # split the spectrum into two regions, ignore the top end which includes saturated events.
+    
+    # Split the spectrum into two regions and ignore the top end which includes saturated events.
     region_edges_percent = [0.17, 0.48, 0.73]
     region_edges_spec = np.floor(region_edges_percent * spec.spectral_axis.max())
     spec_regions = SpectralRegion(
@@ -51,17 +64,21 @@ def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
             [region_edges_spec[1], region_edges_spec[2]],
         ]
     )
+    
     for i, (this_energy, this_region) in enumerate(zip(line_energies, spec_regions)):
         sub_spec = extract_region(spec, this_region)
         mind = np.argmax(sub_spec.data)
         line_centers[i] = sub_spec.spectral_axis[mind].value
-    # fit rough calibration using just these two lines
+    
+    # Fit rough calibration using just these two lines.
     p = np.polyfit(line_energies.value, line_centers, 1)
     f = np.poly1d(p)
+    
     if plot:
         plt.plot(spec.spectral_axis, spec.flux)
         for this_line in line_centers:
             plt.axvline(this_line)
+    
     return f
 
 
@@ -80,7 +97,13 @@ def fit_peak_parabola(spec: Spectrum1D) -> float:
     x = spec.spectral_axis.value
     y = spec.flux.value
     max_ind = np.argmax(y)
-    # TODO add edge case for max at index value 0 or max index
+
+    # Edge cases: a parabola requires at least 3 points to fit. If the fit window is too small, then a parabola cannot be fit to the measured data.
+    # If the maximum value corresponds to the first or the last point in the array, then there is no point to its left, which means that a parabola cannot be fit to the measured data.
+    # In these edge cases, simply return the maximum value of "x" within the fit window. 
+    if len(x) < 3 or max_ind == 0 or max_ind == len(x) - 1:
+        return x[max_ind]
+    
     fit_x = [x[max_ind - 1], x[max_ind], x[max_ind + 1]]
     fit_y = [y[max_ind - 1], y[max_ind], y[max_ind + 1]]
     p = np.polyfit(fit_x, fit_y, 2)
@@ -135,13 +158,18 @@ def fit_peaks(
     return fit_centers
 
 
-def calibrate_phlist_barium_linear(ph_list: PhotonList, plot: bool = False):
+def calibrate_phlist_barium_linear(ph_list: PhotonList, plot: bool = False, mode: str = "default"):
     """Given a PhotonList of a Ba-133 spectrum,
     perform a linear energy calibration for all detectors and pixels.
 
     Parameters
     ----------
     ph_list: PhotonList
+    plot: bool
+        If True, display diagnostic plots
+    mode: str
+        "default" - uses only strong lines >15 keV (recommended)
+        "highsens" - uses all 7 lines including weak low-energy lines
 
     Returns
     -------
@@ -152,14 +180,25 @@ def calibrate_phlist_barium_linear(ph_list: PhotonList, plot: bool = False):
     spec_bins = np.arange(0, 4097, 8, dtype=np.uint16) * u.pix
     lin_cal_params = np.zeros((4, 12, 2))
     all_pixels = PixelList.all()
+    
     for i, this_pixel in enumerate(all_pixels):
-        # fitting barium lines
+        # Fitting barium lines
         this_spec = ph_list.spectrum(pixel_list=this_pixel, bins=spec_bins)
-        f = get_calfunc_barium_rough(this_spec)
-        ba_line_centers = f(BA_LINE_ENERGIES.value)
+        f = get_calfunc_barium_rough(this_spec, mode=mode)
+        
+        # Select which lines to use based on mode
+        if mode == "default":
+            # Use only strong lines >15 keV
+            line_energies_to_use = BA_LINE_ENERGIES[2:]  # Indices 2-6: excludes 7.5806 and 11.85 keV
+        else:
+            # Use all lines
+            line_energies_to_use = BA_LINE_ENERGIES
+        
+        ba_line_centers = f(line_energies_to_use.value)
         fit_line_centers = fit_peaks(
             this_spec, u.Quantity(ba_line_centers, this_spec.spectral_axis.unit)
         )
+        
         if plot:
             plt.figure()
             plt.plot(this_spec.spectral_axis.value, this_spec.flux.value)
@@ -168,31 +207,35 @@ def calibrate_phlist_barium_linear(ph_list: PhotonList, plot: bool = False):
                 plt.axvline(that_line, color="green", label="rough")
             plt.title(f"{this_spec['label'].value}")
             plt.show()
-        # if this_pixel > 8:  # small pixel, remove the weak escape lines
-        #    x = [fit_line_centers[0], fit_line_centers[1], fit_line_centers[-1]]
-        #    y = [line_energies[0].value, line_energies[1].value, line_energies[-1].value]
-        # else:
+        
         x = fit_line_centers
-        y = BA_LINE_ENERGIES.value
+        y = line_energies_to_use.value
         p = np.polyfit(x, y, 1)
         f = np.poly1d(p)
+        
         if plot:
             plt.figure()
             plt.plot(x, y, "x")
             plt.plot(x, f(x.value))
             plt.title(f"{this_spec['label'].value}")
             plt.show()
+        
         lin_cal_params[this_pixel["asic"], this_pixel["pixel"], :] = p
+    
     return lin_cal_params
 
 
-def calibrate_speclist_barium_linear(spec_list: SpectrumList, plot: bool = False):
+def calibrate_speclist_barium_linear(spec_list: SpectrumList, plot: bool = False, mode: str = "default"):
     """Given a PhotonList of a Ba-133 spectrum,
     perform a linear energy calibration for all detectors and pixels.
 
     Parameters
     ----------
-    ph_list: PhotonList
+    spec_list: SpectrumList
+    plot: bool
+    mode: str
+        "default" - uses only strong lines >15 keV
+        "highsens" - uses all lines including weak low-energy lines
 
     Returns
     -------
@@ -201,18 +244,27 @@ def calibrate_speclist_barium_linear(spec_list: SpectrumList, plot: bool = False
     """
 
     lin_cal_params = np.zeros((24, 2))
+    
     for pixel_index, this_pixel in enumerate(spec_list.pixel_list):
-        # fitting barium lines
+        # Fitting barium lines
         this_spec = spec_list.spectrum(pixel_list=this_pixel)
-        f = get_calfunc_barium_rough(this_spec)
-        # TODO: test lines for flux
-        STRONG_BA_LINE_ENERGIES = [7.8, 30.85, 35, 81] * u.keV
-        ba_line_centers = f(STRONG_BA_LINE_ENERGIES.value)
+        f = get_calfunc_barium_rough(this_spec, mode=mode)
+        
+        # Select which lines to use based on mode
+        if mode == "default":
+            # Use only strong lines: 30.85, 35, 81 keV
+            STRONG_BA_LINE_ENERGIES = [BA_LINE_ENERGIES[2], BA_LINE_ENERGIES[3], BA_LINE_ENERGIES[-1]]
+        else:
+            # Use all lines including weak low-energy lines
+            STRONG_BA_LINE_ENERGIES = [7.8, 30.85, 35, 81] * u.keV
+        
+        ba_line_centers = f([line.value for line in STRONG_BA_LINE_ENERGIES])
         fit_line_centers = fit_peaks(
             this_spec,
             u.Quantity(ba_line_centers, this_spec.spectral_axis.unit),
             window=5,
         )
+        
         if plot:
             plt.figure()
             plt.plot(this_spec.spectral_axis.value, this_spec.flux.value)
@@ -222,20 +274,20 @@ def calibrate_speclist_barium_linear(spec_list: SpectrumList, plot: bool = False
             plt.title(this_pixel["label"])
             plt.legend()
             plt.show()
-        # if this_pixel > 8:  # small pixel, remove the weak escape lines
-        #    x = [fit_line_centers[0], fit_line_centers[1], fit_line_centers[-1]]
-        #    y = [line_energies[0].value, line_energies[1].value, line_energies[-1].value]
-        # else:
+        
         x = fit_line_centers
-        y = STRONG_BA_LINE_ENERGIES.value
+        y = [line.value for line in STRONG_BA_LINE_ENERGIES]
         p = np.polyfit(x, y, 1)
         f = np.poly1d(p)
+        
         if plot:
             plt.figure()
             plt.plot(x, y, "x")
             plt.plot(x, f(x.value))
             plt.show()
+        
         lin_cal_params[pixel_index, :] = p
+    
     return lin_cal_params
 
 
