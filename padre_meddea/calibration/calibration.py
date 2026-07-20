@@ -46,7 +46,10 @@ def process_file(filename: Path, overwrite=False) -> list:
 
     if file_path.suffix.lower() in [".bin", ".dat"]:  # raw file
         # Before we process, validate the file with CCSDS
-        custom_validators = [validation.validate_packet_checksums]
+        custom_validators = [
+            validation.validate_packet_checksums,
+            lambda f: validation.validate_file_size(f, size_limit=10500000),  # 10 MB
+        ]
         validation_findings = validation.validate(
             file_path,
             valid_apids=list(padre_meddea.APID.values()),
@@ -59,6 +62,7 @@ def process_file(filename: Path, overwrite=False) -> list:
 
         # Prepare Metadata for Output Files Naming and Headers
         test_flag = False
+        input_level_str = "raw"
         level_str = "l0"
 
         # Look for each kind of data in the parsed packets
@@ -99,9 +103,16 @@ def process_file(filename: Path, overwrite=False) -> list:
 
             # PKT HDU
             # record originating filename
-            aws_db.record_filename(file_path.name, pkt_list.time[0], pkt_list.time[-1])
+            aws_db.record_filename(
+                file_path.name,
+                pkt_list.time[0],
+                pkt_list.time[-1],
+                level_str=input_level_str,
+            )
             # record output filename
-            aws_db.record_filename(path.name, pkt_list.time[0], pkt_list.time[-1])
+            aws_db.record_filename(
+                path.name, pkt_list.time[0], pkt_list.time[-1], level_str=level_str
+            )
             pkt_list = Table(pkt_list)
             pkt_list.remove_column("time")
 
@@ -185,9 +196,11 @@ def process_file(filename: Path, overwrite=False) -> list:
             )
             primary_hdr["FILENAME"] = (path.name, get_comment("FILENAME"))
             # record originating filename
-            aws_db.record_filename(file_path.name, date_beg, date_end)
+            aws_db.record_filename(
+                file_path.name, date_beg, date_end, level_str=input_level_str
+            )
             # record output filename
-            aws_db.record_filename(path.name, date_beg, date_end)
+            aws_db.record_filename(path.name, date_beg, date_end, level_str=level_str)
             empty_primary_hdu = fits.PrimaryHDU(header=primary_hdr)
 
             # Create HK HDU
@@ -277,9 +290,13 @@ def process_file(filename: Path, overwrite=False) -> list:
                 overwrite=overwrite,
             )
             # record originating filename
-            aws_db.record_filename(file_path.name, ts.time[0], ts.time[-1])
+            aws_db.record_filename(
+                file_path.name, ts.time[0], ts.time[-1], level_str=input_level_str
+            )
             # record output filename
-            aws_db.record_filename(path.name, ts.time[0], ts.time[-1])
+            aws_db.record_filename(
+                path.name, ts.time[0], ts.time[-1], level_str=level_str
+            )
             primary_hdr["FILENAME"] = (path.name, get_comment("FILENAME"))
 
             # Spectrum HDU
