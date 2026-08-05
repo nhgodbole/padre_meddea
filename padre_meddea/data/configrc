@@ -20,8 +20,8 @@ time_format = %Y-%m-%d %H:%M:%S
 
 ; Location to save download data to. Path should be specified relative to the
 ; PADRE working directory.
-; Default value: data/
-download_dir = data
+; Default value: .padre_meddea/data/
+download_dir = .padre_meddea/data
 
 ;;;;;;;;;;;;
 ; Logger   ;
