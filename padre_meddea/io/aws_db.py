@@ -8,13 +8,13 @@ from specutils import SpectralRegion
 from swxsoc.util.util import create_annotation, record_timeseries
 
 from padre_meddea.housekeeping.calibration import get_calibration_func
+from padre_meddea.net import PADREClient
 from padre_meddea.spectrum.calibration import (
     calibrate_linear_speclist,
     get_ql_calibration_file,
 )
-from padre_meddea.spectrum.spectrum import SpectrumList
-from padre_meddea.net import PADREClient
-from padre_meddea.util.util import parse_science_filename, parse_raw_meddea_filename
+from padre_meddea.spectrum.spectrum import PhotonList, SpectrumList
+from padre_meddea.util.util import parse_raw_meddea_filename, parse_science_filename
 
 
 def record_spectra(spec_list: SpectrumList):
@@ -34,10 +34,13 @@ def record_spectra(spec_list: SpectrumList):
         record_timeseries(ts, "spectra", "meddea")
 
 
-def record_photons(pkt_list, event_list):
+def record_photons(ph_list: PhotonList):
     """Send photon time series data to AWS."""
-    record_timeseries(pkt_list, "photon_pkt", "meddea")
-    create_annotation(pkt_list.time[0], f"{pkt_list.meta['ORIGFILE']}", ["meta"])
+    ph_list.calibrate()
+    energy_edges = [5, 10, 15, 25, 50, 100] * u.keV
+    ts = ph_list.lightcurve(energy_edges=energy_edges, time_bin_size=1 * u.s)
+    record_timeseries(ts, "spectra", "meddea")
+    create_annotation(ph_list.time[0], f"{ph_list.meta['ORIGFILE']}", ["meta"])
 
 
 def record_housekeeping(hk_ts: TimeSeries):
