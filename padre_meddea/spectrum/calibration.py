@@ -1,7 +1,7 @@
 """Tools to analyze and calibrate spectral data"""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -13,13 +13,22 @@ from specutils import SpectralRegion, Spectrum1D
 from specutils.manipulation import extract_region
 
 import padre_meddea.util.util as util
-from padre_meddea.util.pixels import PixelList
 from padre_meddea import _data_directory
 from padre_meddea.spectrum.spectrum import PhotonList, SpectrumList
+from padre_meddea.util.pixels import PixelList
 
 specutils.conf.do_continuum_function_check = False
 
 BA_LINE_ENERGIES = [7.8, 11.8, 30.85, 35, 53.5, 57.8, 81] * u.keV
+
+
+def get_drm_files() -> List[Path]:
+    """Return the latest ARF and RMF files in the calibration directory."""
+    file_directory = _data_directory / "science" / "calibration" / "drm"
+    return [
+        util._latest_file_by_pattern(file_directory, "*arf.fits"),
+        util._latest_file_by_pattern(file_directory, "*rmf.fits"),
+    ]
 
 
 def get_calfunc_barium_rough(spec: Spectrum1D, plot: bool = False):
