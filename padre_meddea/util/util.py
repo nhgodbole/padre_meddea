@@ -7,6 +7,8 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from typing import Optional
+from urllib.request import urlretrieve
 
 import astropy.units as u
 import numpy as np
@@ -26,7 +28,7 @@ from swxsoc.util import (
 )
 
 import padre_meddea
-from padre_meddea import APID, EPOCH, log
+from padre_meddea import APID, EPOCH, _data_directory, log
 
 # used to identify bad times
 MIN_TIME_BAD = Time("2024-02-01T00:00")
@@ -41,7 +43,47 @@ __all__ = [
     "calc_time",
     "has_baseline",
     "is_consecutive",
+    "download_sample_data",
 ]
+
+
+def download_sample_data(destination_dir: Optional[Path] = None) -> Path:
+    """Download the example photon FITS file and cache it locally."""
+    filename = "padre_meddea_l0_photon_20260704T194514_v1.0.0.fits"
+
+    if destination_dir is not None:
+        base_dir = Path(destination_dir)
+    else:
+        base_dir = Path(os.path.expanduser("~")) / ".padre_meddea" / "data"
+        download_dir = getattr(padre_meddea.config, "download_dir", None)
+        if download_dir:
+            base_dir = Path(download_dir)
+            if not base_dir.is_absolute():
+                base_dir = padre_meddea._package_directory / base_dir
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    target_path = base_dir / filename
+
+    if target_path.exists():
+        return target_path
+
+    url = (
+        "https://umbra.nascom.nasa.gov/padre/padre-meddea/l0/photon/2026/07/04/"
+        f"{filename}"
+    )
+    urlretrieve(url, str(target_path))
+    return target_path
+
+
+def get_photon_energy_calibration_file(this_time: Time) -> Path:
+    """Given a time return the appropriate energy calibration file for that time."""
+    file_directory = _data_directory / "science" / "calibration" / "energy"
+    file_list = list(file_directory.glob("*.npy"))
+
+    if len(file_list) == 0:
+        raise FileNotFoundError(f"No calibration files found in {file_directory}")
+    else:
+        return file_list[-1]  # TODO: implement time-based selection of calibration file
 
 
 def parse_raw_meddea_filename(filename: str):
@@ -424,3 +466,15 @@ def threshold_to_energy(threshold_value: int) -> u.Quantity:
 def get_file_time(filename) -> Time:
     """Given filename return the time stamp."""
     return Time(f"{filename[0:4]}-{filename[4:6]}-{filename[6:8]}T00:00")
+
+
+def _latest_file_by_pattern(file_directory: Path, file_pattern: str) -> Path:
+    """Return latest file matching pattern using filename date stamp."""
+    file_list = list(file_directory.glob(file_pattern))
+    if not file_list:
+        raise FileNotFoundError(f"No files found matching pattern: {file_pattern}")
+    file_table = TimeSeries(
+        time=Time([get_file_time(this_file.name) for this_file in file_list]),
+        data={"filename": [this_file.name for this_file in file_list]},
+    )
+    return file_directory / file_table[np.argmax(file_table.time)]["filename"]
