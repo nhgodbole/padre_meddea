@@ -13,3 +13,5 @@ Contributors
 * `Andrew Robbertz <https://github.com/Alrobbertz>`_
 * `Damian Barrous-Dume <https://github.com/dbarrous>`_
 * `Niharika Godbole <https://github.com/nhgodbole>`_
+* `Muriel Stiefel <https://github.com/Muriel23>`_
+* `Gwendoline Marc`
