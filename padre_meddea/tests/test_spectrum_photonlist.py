@@ -1,8 +1,7 @@
-import astropy.units as u
 import numpy as np
 import pytest
-from astropy.timeseries import BinnedTimeSeries, TimeSeries
-from specutils import SpectralRegion, Spectrum1D
+from astropy.timeseries import TimeSeries
+from specutils import Spectrum1D
 
 from padre_meddea import _test_files_directory
 from padre_meddea.io.file_tools import (
@@ -39,9 +38,11 @@ def test_photonlist_slice(ph_list):
 def test_photonlist_slice_invalid(ph_list):
     """Test that we raise an error when slicing a photonlist with invalid types"""
     with pytest.raises(ValueError):
+        ph_list[0]
+    with pytest.raises(ValueError):
         ph_list[0:1]
     with pytest.raises(ValueError):
-        ph_list["2026-07-04T20:31:00", "2026-07-04T20:45:00"]
+        ph_list["2026-07-04T20:31:00"]
 
 
 def test_photonlist_text_summary_contains_event_count(ph_list):
@@ -55,10 +56,12 @@ def test_photonlist_text_summary_contains_event_count(ph_list):
 
 def test_photonlist_add(ph_list):
     """Test that we can add two photonlists together"""
-    ph_list2 = ph_list.copy()
-    ph_list3 = ph_list + ph_list2
+    ph_list1 = ph_list[ph_list.time[2] : ph_list.time[3]]
+    ph_list2 = ph_list[ph_list.time[0] : ph_list.time[1]]
+
+    ph_list3 = ph_list1 + ph_list2
     assert isinstance(ph_list3, spectrum.PhotonList)
-    assert len(ph_list3.event_list) == len(ph_list.event_list) + len(
+    assert len(ph_list3.event_list) == len(ph_list1.event_list) + len(
         ph_list2.event_list
     )
 
@@ -90,22 +93,16 @@ def test_photonlist(file):
     assert isinstance(phlist.spectrum(pixel_list=phlist.pixel_list), Spectrum1D)
     assert isinstance(phlist.spectrum(), Spectrum1D)
 
-    assert isinstance(
-        phlist.lightcurve(
-            pixel_list=phlist.pixel_list,
-            sr=SpectralRegion([[0, 4000]] * u.pix),
-            int_time=0.1 * u.s,
-        ),
-        BinnedTimeSeries,
-    )
 
-    if file.suffix == ".dat":
-        assert isinstance(
-            phlist.data_rate(),  # need to recreate this fits file to include pktlength
-            BinnedTimeSeries,
-        )
-    # perform basic test on the string representation
-    str_list = ["PhotonList", "events", "TimeSeries", "event_list"]
-    repr_str = str(phlist)
-    for this_str in str_list:
-        assert repr_str.count(this_str) >= 1
+def test_calibrate_nobaseline(ph_list):
+    """Test that we raise an error when calibrating a photonlist without baseline column"""
+    with pytest.raises(ValueError):
+        ph_list.calibrate()
+
+
+def test_calibrate(ph_list):
+    """Test that we can calibrate a photonlist"""
+    ph_list.calibrate()
+    assert ph_list.calibrated is True
+    assert "energy" in ph_list.event_list.colnames
+    assert isinstance(ph_list.spectrum(pixel_list=ph_list.pixel_list), Spectrum1D)

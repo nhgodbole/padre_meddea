@@ -64,6 +64,8 @@ class PhotonList:
     event_list : TimeSeries
         The time series of event data
 
+    TODO: add metadata if opening from fits file
+
     Examples
     --------
     >>> from padre_meddea.io import read_file
@@ -80,8 +82,18 @@ class PhotonList:
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self.event_list[key]
+            raise ValueError(
+                "PhotonList does not support indexing by integer. Use a slice with start and stop times instead."
+            )
+        if isinstance(key, str):
+            raise ValueError(
+                "PhotonList does not support indexing by string. Use a slice with start and stop times instead."
+            )
         elif isinstance(key, slice):
+            if isinstance(key.start, int) or isinstance(key.stop, int):
+                raise ValueError(
+                    "PhotonList does not support indexing by integer. Use a slice with start and stop times instead."
+                )
             if isinstance(key.start, str) and isinstance(key.stop, str):
                 start_time = Time(key.start)
                 stop_time = Time(key.stop)
@@ -160,6 +172,11 @@ class PhotonList:
 
         gain_flight = gain_ground * 4
         offset_flight = offset_ground * 4
+
+        if "baseline" not in self.event_list.colnames:
+            raise ValueError(
+                "Baseline column not found in event list. Cannot calibrate data."
+            )
 
         atod = (
             self.event_list["atod"].astype(float)
