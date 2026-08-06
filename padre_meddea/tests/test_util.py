@@ -309,30 +309,3 @@ def test_trim_timeseries():
     # all good
     ts = TimeSeries(time_start=util.MIN_TIME_BAD, time_delta=1 * u.year, n_samples=5)
     assert len(util.trim_timeseries(ts)) == len(ts)
-
-
-def test_download_sample_data_uses_configrc_download_dir(monkeypatch, tmp_path):
-    """Test that the downloader uses the configured download directory from configrc."""
-    config_dir = tmp_path / "padre_meddea" / "data"
-    config_dir.mkdir(parents=True)
-    (config_dir / "configrc").write_text(
-        "[downloads]\ndownload_dir = /tmp/configured-downloads\n",
-        encoding="utf-8",
-    )
-
-    monkeypatch.setattr(padre_meddea, "_package_directory", tmp_path / "padre_meddea")
-
-    def mock_urlretrieve(url, filename):
-        Path(filename).write_bytes(b"test")
-        return filename, None
-
-    monkeypatch.setattr(util, "urlretrieve", mock_urlretrieve)
-
-    result = util.download_sample_data()
-
-    assert (
-        result
-        == Path("/tmp/configured-downloads")
-        / "padre_meddea_l0_photon_20260704T194514_v1.0.0.fits"
-    )
-    assert result.exists()

@@ -9,11 +9,10 @@ Energy calibration is a crucial step in analyzing photon data, as it ensures tha
 
 .. doctest::
 
-    from padre_meddea.util.util import download_sample_data
-    sample_file = download_sample_data()
-    from padre_meddea.io import read_file
-    ph_list = read_file(sample_file)
-    print(ph_list._text_summary())
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.io import read_file
+   >>> ph_list = read_file(sample_file)
+   >>> print(ph_list._text_summary())
 
 This sample file includes a solar flare event as well as calibration data, which is useful to confirm the energy calibration process.
 The event data is contained in the `event_list` attribute of the `PhotonList` object, which is a structured array with fields for time, sequence count, clocks, ASIC, channel, A-to-D conversion value, baseline, packet times, packet clock, and pixel number.
@@ -40,10 +39,13 @@ First it is usually a good idea to have a look at the spectrogram.
 
 .. plot::
 
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
-    >>> ph_list.plot_spectrogram()
-    >>> plt.show()
+   >>> import matplotlib.pyplot as plt
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.io import read_file
+   >>> ph_list = read_file(sample_file)
+   >>> ph_list.calibrate()
+   >>> ph_list.plot_spectrogram()
+   >>> plt.show()
 
 
 The spectrogram shows the flare starts at around 2026-07-04T20:35:00.
@@ -51,33 +53,40 @@ The data between 20:08 and 20:30 show the Ba-133 calibration source, which is us
 Let's plot the spectrum for that time period.
 
 .. plot::
-   :context:
 
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
-    >>> ph_list['2026-07-04T20:08:00':'2026-07-04T20:30:00'].spectrum().plot()
-    >>> plt.show()
+   >>> import matplotlib.pyplot as plt
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.io import read_file
+   >>> ph_list = read_file(sample_file)
+   >>> plt.figure(figsize=(10, 6))
+   >>> ph_list['2026-07-04T20:08:00':'2026-07-04T20:30:00'].spectrum().plot()
+   >>> plt.show()
 
 
 Finally, let's plot the spectrum for the flare event.
 
 .. plot::
-   :context:
 
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
-    >>> ph_list['2026-07-04T20:35:00':'2026-07-04T20:45:00'].spectrum().plot()
-    >>> plt.show()
+   >>> import matplotlib.pyplot as plt
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.io import read_file
+   >>> ph_list = read_file(sample_file)
+   >>> plt.figure(figsize=(10, 6))
+   >>> ph_list['2026-07-04T20:35:00':'2026-07-04T20:45:00'].spectrum().plot()
+   >>> plt.show()
 
 You can also plot the light curve for a specific energy range.
 
 .. plot::
-   :context:
 
-    >>> import matplotlib.pyplot as plt
-    >>> import astropy.units as u
-    >>> plt.figure(figsize=(10, 6))
-    >>> ts = ph_list.lightcurve(energy_edges=(5, 30, 50) * u.keV, time_bin_size=1 * u.s)
-    >>> plt.plot(ts.time.datetime, ts["5to30_keV"])
-    >>> plt.plot(ts.time.datetime, ts["30to50_keV"])
-    >>> plt.show()
+   >>> import matplotlib.pyplot as plt
+   >>> import astropy.units as u
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.io import read_file
+   >>> ph_list = read_file(sample_file)
+   >>> ph_list.calibrate()
+   >>> plt.figure(figsize=(10, 6))
+   >>> ts = ph_list.lightcurve(energy_edges=(5, 30, 50) * u.keV, time_bin_size=1 * u.s)
+   >>> plt.plot(ts.time.datetime, ts["5to30_keV"])
+   >>> plt.plot(ts.time.datetime, ts["30to50_keV"])
+   >>> plt.show()

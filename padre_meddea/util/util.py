@@ -7,8 +7,6 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Optional
-from urllib.request import urlretrieve
 
 import astropy.units as u
 import numpy as np
@@ -36,36 +34,7 @@ __all__ = [
     "calc_time",
     "has_baseline",
     "is_consecutive",
-    "download_sample_data",
 ]
-
-
-def download_sample_data(destination_dir: Optional[Path] = None) -> Path:
-    """Download the example photon FITS file and cache it locally."""
-    filename = "padre_meddea_l0_photon_20260704T194514_v1.0.0.fits"
-
-    if destination_dir is not None:
-        base_dir = Path(destination_dir)
-    else:
-        base_dir = Path(os.path.expanduser("~")) / ".padre_meddea" / "data"
-        download_dir = getattr(padre_meddea.config, "download_dir", None)
-        if download_dir:
-            base_dir = Path(download_dir)
-            if not base_dir.is_absolute():
-                base_dir = padre_meddea._package_directory / base_dir
-
-    base_dir.mkdir(parents=True, exist_ok=True)
-    target_path = base_dir / filename
-
-    if target_path.exists():
-        return target_path
-
-    url = (
-        "https://umbra.nascom.nasa.gov/padre/padre-meddea/l0/photon/2026/07/04/"
-        f"{filename}"
-    )
-    urlretrieve(url, str(target_path))
-    return target_path
 
 
 def get_photon_energy_calibration_file(this_time: Time) -> Path:

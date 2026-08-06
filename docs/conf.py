@@ -23,7 +23,17 @@ release = __version__
 is_development = ".dev" in __version__
 # -- Project information -----------------------------------------------------
 
+# -- PADRE MeDDEA Sample Data --------------------------------------------------
 
+# Pre-download all sample data once before building the docs so that pages
+# using `padre_meddea.data.sample` don't each trigger their own download.
+from padre_meddea import log as padre_log
+import padre_meddea.data.sample as padre_sample
+
+_ori_log_level = padre_log.level
+padre_log.setLevel("DEBUG")
+padre_sample.download_all()
+padre_log.setLevel(_ori_log_level)
 
 # -- General configuration ---------------------------------------------------
 
