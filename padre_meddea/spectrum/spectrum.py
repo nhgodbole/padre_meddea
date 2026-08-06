@@ -74,11 +74,14 @@ class PhotonList:
     >>> this_spectrum = ph_list.spectrum(pixel_list=ph_list.pixel_list)  # doctest: +SKIP
     """
 
-    def __init__(self, pkt_list: TimeSeries, event_list: TimeSeries):
+    def __init__(
+        self, pkt_list: TimeSeries, event_list: TimeSeries, meta: dict | None = None
+    ):
         self.data = {"event_list": event_list, "pkt_list": pkt_list}
         self.event_list = event_list
         self.pkt_list = pkt_list
         self.time = self.event_list.time
+        self.meta = meta
 
     def __getitem__(self, key):
         if isinstance(key, int):
