@@ -12,7 +12,10 @@ from padre_meddea.io.file_tools import (
 from padre_meddea.spectrum import spectrum
 from padre_meddea.util.pixels import PixelList
 
-f1 = _test_files_directory / "padreMDA0_240916122901.dat"
+# f1 = _test_files_directory / "padreMDA0_240916122901.dat"
+f1 = _test_files_directory / "padreMDA0_260704194521_cal.dat"
+f2 = _test_files_directory / "padreMDA0_260704194521_flare.dat"
+f3 = _test_files_directory / "padreMDA0_260704194521_particles.dat"
 
 
 @pytest.fixture
@@ -68,15 +71,19 @@ def test_photonlist_add(ph_list):
 
 @pytest.mark.parametrize(
     "file",
-    [_test_files_directory / "padreMDA0_240916122901.dat"]
-    + list((_test_files_directory / "eventlist").glob("*.fits")),
+    [f1, f2, f3] + list((_test_files_directory / "eventlist").glob("*.fits")),
 )
 def test_photonlist(file):
     """Test that we can create a spectrumlist from a raw file"""
     if file.suffix == ".dat":
         phlist = read_raw_a0(file)
+        assert phlist.meta is None
     else:
         phlist = read_fits_l0l1_photon(file)
+        assert phlist.meta is not None
+        assert isinstance(phlist.meta, dict)
+        assert "AUTHOR" in phlist.meta
+        assert phlist.meta["AUTHOR"] == "Steven D. Christe"
 
     assert isinstance(phlist, spectrum.PhotonList)
 
@@ -94,15 +101,17 @@ def test_photonlist(file):
     assert isinstance(phlist.spectrum(), Spectrum1D)
 
 
-def test_calibrate_nobaseline(ph_list):
-    """Test that we raise an error when calibrating a photonlist without baseline column"""
-    with pytest.raises(ValueError):
-        ph_list.calibrate()
-
-
 def test_calibrate(ph_list):
     """Test that we can calibrate a photonlist"""
     ph_list.calibrate()
     assert ph_list.calibrated is True
     assert "energy" in ph_list.event_list.colnames
     assert isinstance(ph_list.spectrum(pixel_list=ph_list.pixel_list), Spectrum1D)
+
+
+def test_calibrate_nobaseline(ph_list):
+    """Test that we raise an error when calibrating a photonlist without baseline column"""
+    # remove the baseline column
+    ph_list.event_list.remove_column("baseline")
+    with pytest.raises(ValueError):
+        ph_list.calibrate()
