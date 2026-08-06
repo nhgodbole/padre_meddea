@@ -58,6 +58,7 @@ Let's plot the spectrum for that time period.
    >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
+   >>> ph_list.calibrate()
    >>> plt.figure(figsize=(10, 6))
    >>> ph_list['2026-07-04T20:08:00':'2026-07-04T20:30:00'].spectrum().plot()
    >>> plt.show()
@@ -71,6 +72,7 @@ Finally, let's plot the spectrum for the flare event.
    >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
+   >>> ph_list.calibrate()
    >>> plt.figure(figsize=(10, 6))
    >>> ph_list['2026-07-04T20:35:00':'2026-07-04T20:45:00'].spectrum().plot()
    >>> plt.show()
