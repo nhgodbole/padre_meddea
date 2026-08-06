@@ -5,7 +5,8 @@ import numpy as np
 from astropy.time import Time
 from astropy.timeseries import TimeSeries
 from specutils import SpectralRegion
-from swxsoc.util.util import create_annotation, record_timeseries
+from swxsoc.db.timeseries import record_timeseries
+from swxsoc.util.grafana import create_annotation
 
 from padre_meddea.housekeeping.calibration import get_calibration_func
 from padre_meddea.net import PADREClient
