@@ -67,12 +67,6 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autosummary_ignore_module_all = False
 autosummary_imported_members = False
 
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": False,
-    "private-members": True,
-}
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
