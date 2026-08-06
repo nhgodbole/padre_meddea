@@ -6,10 +6,7 @@ from astropy.timeseries import TimeSeries
 from specutils import SpectralRegion, Spectrum1D
 
 from padre_meddea import _test_files_directory
-from padre_meddea.io.file_tools import (
-    read_fits_l0l1_spectrum,
-    read_raw_a2,
-)
+from padre_meddea.io.file_tools import read_fits_l0l1_spectrum, read_raw_a2
 from padre_meddea.spectrum import spectrum
 from padre_meddea.util.pixels import PixelList
 

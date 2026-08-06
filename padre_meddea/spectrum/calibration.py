@@ -1,7 +1,7 @@
 """Tools to analyze and calibrate spectral data"""
 
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 import astropy.units as u
 import matplotlib.pyplot as plt
