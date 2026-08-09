@@ -48,7 +48,7 @@ def test_photonlist_text_summary_contains_event_count(ph_list):
     """Test that PhotonList string summary reports the event count."""
     text_summary = ph_list._text_summary()
     assert (
-        "PhotonList (767 events)\n2024-09-16 12:29:01.308 - 12:29:01.774 (0.467s)\n"
+        "PhotonList (2,450 events)\n2026-07-04 20:08:17.198 - 20:09:57.190 (1min 39.992s)\n"
         in text_summary
     )
 
