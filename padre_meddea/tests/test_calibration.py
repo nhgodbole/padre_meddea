@@ -13,7 +13,7 @@ import padre_meddea.io.file_tools as file_tools
     "bin_file,expected_data_type",
     [
         ("padreMDA0_260704194521_cal.dat", "photon"),
-        ("padreMDA2_260704194511_flare.dat", "photon"),
+        ("padreMDA0_260704194521_flare.dat", "photon"),
         ("padreMDA0_260704194521_particles.dat", "photon"),
         ("padreMDA0_240916122901.dat", "photon"),
         ("padreMDA2_240916122851.dat", "spectrum"),

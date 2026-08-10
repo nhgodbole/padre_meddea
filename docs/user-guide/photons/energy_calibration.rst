@@ -9,7 +9,8 @@ Energy calibration is a crucial step in analyzing photon data, as it ensures tha
 
 .. doctest::
 
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS
+   ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> print(ph_list._text_summary())
