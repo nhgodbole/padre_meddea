@@ -8,6 +8,7 @@
 import os
 import sys
 from datetime import datetime
+import logging
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -30,11 +31,12 @@ is_development = ".dev" in __version__
 from padre_meddea import log as padre_log
 import padre_meddea.data.sample as padre_sample
 
+
 _ori_log_level = padre_log.level
 padre_log.setLevel("DEBUG")
 padre_sample.download_all()
 padre_log.setLevel(_ori_log_level)
-
+padre_log.setLevel("WARNING")
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
