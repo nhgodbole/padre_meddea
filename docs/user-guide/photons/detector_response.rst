@@ -13,7 +13,7 @@ To get the latest DRM files, use the `get_drm_files` function from the `padre_me
 .. doctest::
 
     >>> from padre_meddea.spectrum.calibration import get_drm_files
-    >>> arf_file, rmf_file = get_drm_files()
+    >>> rmf_file, arf_file = get_drm_files()
     >>> print(arf_file.name)
     20260721_meddea_arf.fits
     >>> print(rmf_file.name)
