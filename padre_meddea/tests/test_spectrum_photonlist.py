@@ -67,7 +67,7 @@ def test_photonlist_add(ph_list):
 
 @pytest.mark.parametrize(
     "file",
-    [f1, f2, f3] + list((_test_files_directory / "eventlist").glob("*.fits")),
+    [f1, f2, f3] + list((_test_files_directory / "photon").glob("*.fits")),
 )
 def test_photonlist(file):
     """Test that we can create a spectrumlist from a raw file"""
