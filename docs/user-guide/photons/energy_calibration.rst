@@ -9,8 +9,8 @@ Energy calibration is a crucial step in analyzing photon data, as it ensures tha
 
 .. doctest::
 
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS
-   ...
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   INFO: ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> print(ph_list._text_summary())
@@ -45,7 +45,8 @@ First it is usually a good idea to have a look at the spectrogram.
 .. plot::
 
    >>> import matplotlib.pyplot as plt
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   INFO: ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> ph_list.calibrate()
@@ -59,7 +60,8 @@ Let's plot the spectrum for that time period.
 .. plot::
 
    >>> import matplotlib.pyplot as plt
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   INFO: ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> ph_list.calibrate()
@@ -70,7 +72,8 @@ Finally, let's plot the spectrum for the flare event.
 .. plot::
 
    >>> import matplotlib.pyplot as plt
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   INFO: ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> ph_list.calibrate()
@@ -82,7 +85,8 @@ You can also plot the light curve for a specific energy range.
 
    >>> import matplotlib.pyplot as plt
    >>> import astropy.units as u
-   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file
+   >>> from padre_meddea.data.sample import PHOTON_L0_FILE as sample_file  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   INFO: ...
    >>> from padre_meddea.io import read_file
    >>> ph_list = read_file(sample_file)
    >>> ph_list.calibrate()

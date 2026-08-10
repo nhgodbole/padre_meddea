@@ -76,8 +76,8 @@ def _get_sample_files(
             log.info(f"Downloading sample data file from {url} to {fullpath}")
             urlretrieve(url, str(fullpath))
         else:
-            log.debug(
-                f"Sample data file already exists at {fullpath}, skipping download."
+            log.info(
+                f"Sample data file already exists at {fullpath}, using local files."
             )
 
     return fullpaths
